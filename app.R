@@ -182,29 +182,17 @@ server <- function(input, output, session) {
     req(input$weekSelect)
     req(input$recipeSelect)
     
-    # Filter Base on Inputs
-    filtered <- joined_df %>% filter(week_number %in% input$weekSelect) %>%
-      filter(recipe %in% input$recipeSelect)
+    selected_df <- joined_df %>% filter(recipe %in% input$recipeSelect)
     
-    # Empty DF to Hold Data From Loop
-    loopdf <- data.frame()
+    # Group By To Add Up All Ingredients
+    sum_df <- selected_df %>% group_by(.dots=c("Category","ingredient","units")) %>%
+      summarise(Amount = sum(amount)) %>%
+      select(ingredient, Category, Amount, units) %>%
+      arrange(Category, ingredient, units)
     
-    # For Each Ingredient Count Up The Amount
-    for (n in unique(filtered$ingredient)) {
-      
-      # Subset Data for Ingredient
-      ingredient_df <- filtered %>% filter(ingredient == n)
-      
-      loop_out <- data.frame(ingredient = n,
-                             amount = NA,
-                             units = NA
-                             )
-      
-      loopdf <- rbind(loopdf, loop_out)
-      
-    }
+    names(sum_df) <- c("Ingredient","Category","Amount","Units")
     
-    loopdf
+    sum_df
     
   })
   
