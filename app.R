@@ -6,7 +6,7 @@ library(shiny)
 library(shinydashboard)
 library(shinycssloaders)
 library(tidyverse)
-library(googlesheets)
+library(googlesheets4)
 library(DT)
 
 ########################
@@ -33,7 +33,13 @@ ui <- dashboardPage(
     width = 300,
     
     withSpinner(uiOutput("weekSelect")),
-    withSpinner(uiOutput("recipeSelect"))
+    withSpinner(uiOutput("recipeSelect")),
+    textInput(inputId = "googleAccount",
+              label = "Google Account ID:"
+              ),
+    passwordInput(inputId = "googlePass",
+                  label = "Google Account Password:"
+                  )
     
   ),
   # End Dashboard Sidebar
@@ -103,19 +109,27 @@ server <- function(input, output, session) {
   
   
   # Authenticate With Google Using Pre-Stored Token
-  gs_auth(token="/home/fairman_jim/Github/sheets_token.rds")
+  # gs_auth(token="sheets_token.rds")
   
   # Get Meal Planning Sheet
-  sheet <- gs_title("Meal Planning")
+  mealSheet <- "1Bb4KDv5hbMZj6RIOtum9MsPKH8jw1VhhBngQrqJBwHg"
   
   # Get Data From Each Sheet With 8 Seconds Between Each Request
-  recipes <- sheet %>% gs_read(ws = "Recipes")
-  Sys.sleep(6)
-  joining_table <- sheet %>% gs_read(ws = "JoiningTable")
-  Sys.sleep(6)
-  ingredients <- sheet %>% gs_read(ws = "Ingredients")
-  Sys.sleep(6)
-  units <- sheet %>% gs_read(ws = "Units")
+  recipes <- read_sheet(ss = mealSheet,
+                        sheet = "Recipes"
+                        )
+  
+  joining_table <- read_sheet(ss = mealSheet,
+                              sheet = "JoiningTable"
+                              )
+
+  ingredients <- read_sheet(ss = mealSheet,
+                            sheet = "Ingredients"
+                            )
+
+  units <- read_sheet(ss = mealSheet,
+                      sheet = "Units"
+                      )
   
   # Join Datatables Together For Master Dataset
   joined_df <- left_join(joining_table, ingredients, by = c("ingredient" = "ingredient"))
