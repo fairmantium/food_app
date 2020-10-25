@@ -36,17 +36,17 @@ ui <- dashboardPage(
     withSpinner(uiOutput("recipeSelect")),
     textInput(inputId = "googleAccount",
               label = "Google Account ID:"
-              ),
+    ),
     passwordInput(inputId = "googlePass",
                   label = "Google Account Password:"
-                  )
+    )
     
   ),
   # End Dashboard Sidebar
   
   # Start Dashboard Body
   dashboardBody(
-  
+    
     # Start Tabs
     tabsetPanel(
       
@@ -117,19 +117,19 @@ server <- function(input, output, session) {
   # Get Data From Each Sheet With 8 Seconds Between Each Request
   recipes <- read_sheet(ss = mealSheet,
                         sheet = "Recipes"
-                        )
+  )
   
   joining_table <- read_sheet(ss = mealSheet,
                               sheet = "JoiningTable"
-                              )
-
+  )
+  
   ingredients <- read_sheet(ss = mealSheet,
                             sheet = "Ingredients"
-                            )
-
+  )
+  
   units <- read_sheet(ss = mealSheet,
                       sheet = "Units"
-                      )
+  )
   
   # Join Datatables Together For Master Dataset
   joined_df <- left_join(joining_table, ingredients, by = c("ingredient" = "ingredient"))
@@ -201,19 +201,18 @@ server <- function(input, output, session) {
     # Group By To Add Up All Ingredients
     sum_df <- selected_df %>% group_by(.dots=c("Category","ingredient","units")) %>%
       summarise(Amount = sum(amount)) %>%
-      select(ingredient, Category, Amount, units) %>%
-      arrange(Category, ingredient, units)
-    
-    names(sum_df) <- c("Ingredient","Category","Amount","Units")
+      select(ingredient, Amount, units, Category) %>%
+      arrange(Category, ingredient, units) %>%
+      mutate(GroceriesList = paste0(ingredient, " - ", Amount, " ", units))
     
     sum_df
     
   })
   
   
-  ###############################
-  # START REACTIVE DATAFRAME(S) #
-  ###############################
+  #############################
+  # END REACTIVE DATAFRAME(S) #
+  #############################
   
   
   ############################
@@ -225,7 +224,11 @@ server <- function(input, output, session) {
     
     req(groceries())
     
-    DT:: datatable(groceries(),
+    df <- groceries()
+    df <- data.frame(df[["GroceriesList"]])
+    
+    DT:: datatable(df,
+                   rownames = FALSE,
                    extensions = c("Scroller","ColReorder","KeyTable"),
                    options = list(pageLength = 20,
                                   paging = TRUE,
@@ -237,7 +240,7 @@ server <- function(input, output, session) {
                                   scrollX = TRUE,
                                   colReorder = TRUE,
                                   keys = TRUE)
-                   )
+    )
   })
   # End Grocery List Table
   
